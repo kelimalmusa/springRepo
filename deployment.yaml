@@ -1,0 +1,65 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: springcont
+  namespace: default
+  labels:
+    appgroup: ''
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: springcont
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: springcont
+        version: v1
+    spec:
+      containers:
+        - name: container-spring
+          image: swr.ap-southeast-3.myhuaweicloud.com/demo-sre/java-docker-example
+          resources:
+            limits:
+              cpu: 250m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 512Mi
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+        - name: default-secret
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-service
+  namespace: default
+  labels:
+    app: springcont
+spec:
+  ports:
+    - name: cce-service-0
+      protocol: TCP
+      port: 8080
+      targetPort: 8000
+      nodePort: 30122
+  selector:
+    app: springcont
+  type: NodePort
